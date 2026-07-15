@@ -183,6 +183,12 @@ impl ChallengeManagerContract {
     pub fn get_challenge(env: Env, id: u64) -> Option<Challenge> {
         env.storage().persistent().get(&DataKey::Challenge(id))
     }
+
+    pub fn upgrade(env: Env, new_wasm_hash: soroban_sdk::BytesN<32>) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("No admin set");
+        admin.require_auth();
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+    }
 }
 
 #[cfg(test)]

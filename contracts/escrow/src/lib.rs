@@ -53,6 +53,12 @@ impl EscrowContract {
             amount,
         );
     }
+
+    pub fn upgrade(env: Env, new_wasm_hash: soroban_sdk::BytesN<32>) {
+        let manager: Address = env.storage().instance().get(&DataKey::Manager).expect("Not initialized");
+        manager.require_auth();
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+    }
 }
 
 #[cfg(test)]

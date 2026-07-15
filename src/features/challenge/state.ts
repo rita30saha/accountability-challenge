@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Challenge } from "./types";
+import { useTransactionStore } from "@/features/transactions/state";
 import {
   getAllChallenges,
   getChallenge,
@@ -65,6 +66,15 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
     set({ isWriting: true, error: null, txHash: null });
     try {
       const hash = await createChallengeContract(creator, partner, title, description, amount, deadlineUnix);
+      
+      useTransactionStore.getState().addTransaction({
+        hash,
+        challengeName: title,
+        action: "create",
+        amount: `${amount} XLM`,
+        status: "confirmed",
+      });
+
       set({ txHash: hash, isWriting: false });
       await get().fetchChallenges();
     } catch (err: any) {
@@ -77,6 +87,16 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
     set({ isWriting: true, error: null, txHash: null });
     try {
       const hash = await completeChallengeContract(partner, id);
+      const challenge = get().challenges.find((c) => c.id === id);
+
+      useTransactionStore.getState().addTransaction({
+        hash,
+        challengeName: challenge?.title || `Challenge #${id}`,
+        action: "complete",
+        amount: challenge ? `${challenge.amount} XLM` : undefined,
+        status: "confirmed",
+      });
+
       set({ txHash: hash, isWriting: false });
       await get().fetchChallengeById(id);
       await get().fetchChallenges();
@@ -90,6 +110,16 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
     set({ isWriting: true, error: null, txHash: null });
     try {
       const hash = await failChallengeContract(caller, id);
+      const challenge = get().challenges.find((c) => c.id === id);
+
+      useTransactionStore.getState().addTransaction({
+        hash,
+        challengeName: challenge?.title || `Challenge #${id}`,
+        action: "fail",
+        amount: challenge ? `${challenge.amount} XLM` : undefined,
+        status: "confirmed",
+      });
+
       set({ txHash: hash, isWriting: false });
       await get().fetchChallengeById(id);
       await get().fetchChallenges();
@@ -103,6 +133,16 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
     set({ isWriting: true, error: null, txHash: null });
     try {
       const hash = await expireChallengeContract(caller, id);
+      const challenge = get().challenges.find((c) => c.id === id);
+
+      useTransactionStore.getState().addTransaction({
+        hash,
+        challengeName: challenge?.title || `Challenge #${id}`,
+        action: "expire",
+        amount: challenge ? `${challenge.amount} XLM` : undefined,
+        status: "confirmed",
+      });
+
       set({ txHash: hash, isWriting: false });
       await get().fetchChallengeById(id);
       await get().fetchChallenges();

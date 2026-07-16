@@ -9,7 +9,7 @@ const {
   Keypair,
 } = require("@stellar/stellar-sdk");
 
-const NATIVE_TOKEN_SAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
+const NATIVE_TOKEN_SAC = "CDLZFC3SYJYDZT7K6AOWJ3RLGWRLU75N32M6VXMGF5WSSWAAEX3NUGQN";
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const SOROBAN_RPC_URL = "https://soroban-testnet.stellar.org";
 
@@ -41,14 +41,41 @@ function runCmdAllowError(cmd) {
   }
 }
 
+// Bypasses the SDK's getTransaction parsing to prevent XDR format mismatch errors
 async function pollTx(hash) {
   for (let i = 0; i < 20; i++) {
-    const res = await server.getTransaction(hash);
-    if (res.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-      return res;
-    }
-    if (res.status === rpc.Api.GetTransactionStatus.FAILED) {
-      throw new Error(`Transaction execution failed on ledger: ${hash}`);
+    try {
+      const response = await fetch(SOROBAN_RPC_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getTransaction",
+          params: {
+            hash: hash,
+          },
+        }),
+      });
+
+      const json = await response.json();
+      if (json.error) {
+        throw new Error(`RPC error during polling: ${JSON.stringify(json.error)}`);
+      }
+
+      if (json.result) {
+        const status = json.result.status;
+        if (status === "SUCCESS") {
+          return json.result;
+        }
+        if (status === "FAILED") {
+          throw new Error(`Transaction execution failed on ledger: ${hash}`);
+        }
+      }
+    } catch (e) {
+      console.warn(`Polling attempt ${i + 1} failed: ${e.message}. Retrying...`);
     }
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }

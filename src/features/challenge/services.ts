@@ -46,12 +46,34 @@ export class SorobanClient {
     
     // Poll for status (max 15 retries with 1.5s interval)
     for (let i = 0; i < 15; i++) {
-      const txResult = await this.server.getTransaction(txHash);
-      if (txResult.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-        return txHash;
-      }
-      if (txResult.status === rpc.Api.GetTransactionStatus.FAILED) {
-        throw new Error("Transaction execution failed on ledger.");
+      try {
+        const res = await fetch(SOROBAN_RPC_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getTransaction",
+            params: {
+              hash: txHash,
+            },
+          }),
+        });
+
+        const json = await res.json();
+        if (json.result) {
+          const status = json.result.status;
+          if (status === "SUCCESS") {
+            return txHash;
+          }
+          if (status === "FAILED") {
+            throw new Error("Transaction execution failed on ledger.");
+          }
+        }
+      } catch (err: any) {
+        console.warn(`Polling attempt ${i + 1} failed: ${err.message}. Retrying...`);
       }
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }

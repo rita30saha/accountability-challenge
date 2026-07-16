@@ -9,7 +9,7 @@ const {
   Keypair,
 } = require("@stellar/stellar-sdk");
 
-const NATIVE_TOKEN_SAC = "CDLZFC3SYJYDZT7K6AOWJ3RLGWRLU75N32M6VXMGF5WSSWAAEX3NUGQN";
+const NATIVE_TOKEN_SAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const SOROBAN_RPC_URL = "https://soroban-testnet.stellar.org";
 
@@ -183,7 +183,7 @@ async function main() {
   console.log("Deploying Escrow contract to Testnet...");
   const escrowWasmPath = path.resolve(
     __dirname,
-    "../target/wasm32-unknown-unknown/release/escrow.wasm"
+    "../target/wasm32v1-none/release/escrow.wasm"
   );
   const escrowContractId = runCmd(
     `stellar contract deploy --wasm "${escrowWasmPath}" --source deployer --network testnet`
@@ -194,7 +194,7 @@ async function main() {
   console.log("Deploying Challenge Manager contract to Testnet...");
   const managerWasmPath = path.resolve(
     __dirname,
-    "../target/wasm32-unknown-unknown/release/challenge_manager.wasm"
+    "../target/wasm32v1-none/release/challenge_manager.wasm"
   );
   const managerContractId = runCmd(
     `stellar contract deploy --wasm "${managerWasmPath}" --source deployer --network testnet`

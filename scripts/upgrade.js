@@ -1,5 +1,17 @@
 const { execSync } = require("child_process");
 const path = require("path");
+const {
+  rpc,
+  Contract,
+  TransactionBuilder,
+  nativeToScVal,
+  Keypair,
+} = require("@stellar/stellar-sdk");
+
+const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+const SOROBAN_RPC_URL = "https://soroban-testnet.stellar.org";
+
+const server = new rpc.Server(SOROBAN_RPC_URL);
 
 function runCmd(cmd) {
   console.log(`Running: ${cmd}`);
@@ -10,6 +22,65 @@ function runCmd(cmd) {
     if (err.stderr) console.error(err.stderr.toString());
     process.exit(1);
   }
+}
+
+async function pollTx(hash) {
+  for (let i = 0; i < 20; i++) {
+    const res = await server.getTransaction(hash);
+    if (res.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+      return res;
+    }
+    if (res.status === rpc.Api.GetTransactionStatus.FAILED) {
+      throw new Error(`Transaction execution failed on ledger: ${hash}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  throw new Error(`Transaction timed out: ${hash}`);
+}
+
+async function upgradeContract(deployerKeypair, contractId, wasmHashHex) {
+  const publicKey = deployerKeypair.publicKey();
+  console.log(`Submitting upgrade request for contract: ${contractId}`);
+
+  // Fetch deployer account
+  const account = await server.getAccount(publicKey);
+  
+  // Format the 32-byte hex hash into the exact bytes format
+  const wasmHashBuffer = Buffer.from(wasmHashHex, "hex");
+  if (wasmHashBuffer.length !== 32) {
+    throw new Error(`WASM Hash must be exactly 32 bytes (64 hex characters). Received: ${wasmHashHex}`);
+  }
+
+  const contract = new Contract(contractId);
+  const upgradeOp = contract.call(
+    "upgrade",
+    nativeToScVal(wasmHashBuffer, { type: "bytes" })
+  );
+
+  const tx = new TransactionBuilder(account, {
+    fee: "100",
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(upgradeOp)
+    .setTimeout(30)
+    .build();
+
+  const sim = await server.simulateTransaction(tx);
+  if ("error" in sim) {
+    throw new Error(`Simulation failed during upgrade: ${sim.error}`);
+  }
+
+  const preparedTx = rpc.assembleTransaction(tx, sim).build();
+  preparedTx.sign(deployerKeypair);
+
+  console.log("Submitting contract upgrade transaction...");
+  const response = await server.sendTransaction(preparedTx);
+  if (response.status === "ERROR") {
+    throw new Error(`Upgrade submission failed: ${JSON.stringify(response.errorResult)}`);
+  }
+
+  await pollTx(response.hash);
+  console.log("Contract upgraded successfully!");
 }
 
 async function main() {
@@ -38,21 +109,22 @@ async function main() {
     process.exit(1);
   }
 
-  // 2. Install new WASM byte code on chain to get hash
-  console.log("Installing new WASM contract byte code to Testnet...");
-  const wasmHash = runCmd(
+  // 2. Fetch keys
+  const deployerSecret = runCmd("stellar keys secret deployer");
+  const deployerKeypair = Keypair.fromSecret(deployerSecret);
+
+  // 3. Install new WASM bytecode on chain to get hash
+  console.log("Installing new WASM contract bytecode to Testnet...");
+  const wasmHashHex = runCmd(
     `stellar contract install --wasm "${wasmPath}" --source deployer --network testnet`
   );
-  console.log(`New WASM Hash: ${wasmHash}`);
+  console.log(`New WASM Hash Hex: ${wasmHashHex}`);
 
-  // 3. Invoke contract 'upgrade' method
-  console.log("Invoking 'upgrade' method on deployed contract...");
-  runCmd(
-    `stellar contract invoke --id ${contractId} --source deployer --network testnet -- upgrade --new_wasm_hash ${wasmHash}`
-  );
+  // 4. Programmatic Upgrade invocation
+  await upgradeContract(deployerKeypair, contractId, wasmHashHex);
 
   console.log("\n=== Success! ===");
-  console.log(`Contract upgraded to WASM bytecode hash ${wasmHash} successfully.`);
+  console.log(`Contract upgraded to WASM bytecode hash ${wasmHashHex} successfully.`);
 }
 
 main().catch((err) => {

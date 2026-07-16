@@ -1,8 +1,19 @@
 const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const {
+  rpc,
+  Contract,
+  TransactionBuilder,
+  nativeToScVal,
+  Keypair,
+} = require("@stellar/stellar-sdk");
 
 const NATIVE_TOKEN_SAC = "CDLZFC3SYJYDZT7K6AOWJ3RLGWRLU75N32M6VXMGF5WSSWAAEX3NUGQN";
+const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+const SOROBAN_RPC_URL = "https://soroban-testnet.stellar.org";
+
+const server = new rpc.Server(SOROBAN_RPC_URL);
 
 function runCmd(cmd) {
   console.log(`Running: ${cmd}`);
@@ -13,6 +24,103 @@ function runCmd(cmd) {
     if (err.stderr) console.error(err.stderr.toString());
     process.exit(1);
   }
+}
+
+async function pollTx(hash) {
+  for (let i = 0; i < 20; i++) {
+    const res = await server.getTransaction(hash);
+    if (res.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+      return res;
+    }
+    if (res.status === rpc.Api.GetTransactionStatus.FAILED) {
+      throw new Error(`Transaction execution failed on ledger: ${hash}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  throw new Error(`Transaction timed out: ${hash}`);
+}
+
+async function initializeContracts(deployerKeypair, managerId, escrowId, nativeTokenSac) {
+  const publicKey = deployerKeypair.publicKey();
+  console.log(`Initializing using admin/deployer address: ${publicKey}`);
+
+  // 1. Fetch deployer account details
+  const account = await server.getAccount(publicKey);
+
+  // --- Initialize Escrow ---
+  console.log("-----------------------------------------");
+  console.log("Programmatically initializing Escrow Contract...");
+  const escrowContract = new Contract(escrowId);
+  const escrowOp = escrowContract.call(
+    "initialize",
+    nativeToScVal(managerId, { type: "address" }),
+    nativeToScVal(nativeTokenSac, { type: "address" })
+  );
+
+  const escrowTx = new TransactionBuilder(account, {
+    fee: "100",
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(escrowOp)
+    .setTimeout(30)
+    .build();
+
+  const escrowSim = await server.simulateTransaction(escrowTx);
+  if ("error" in escrowSim) {
+    throw new Error(`Escrow simulation failed: ${escrowSim.error}`);
+  }
+
+  const escrowPrepared = rpc.assembleTransaction(escrowTx, escrowSim).build();
+  escrowPrepared.sign(deployerKeypair);
+
+  console.log("Submitting Escrow initialization transaction...");
+  const escrowResponse = await server.sendTransaction(escrowPrepared);
+  if (escrowResponse.status === "ERROR") {
+    throw new Error(`Escrow submission failed: ${JSON.stringify(escrowResponse.errorResult)}`);
+  }
+
+  await pollTx(escrowResponse.hash);
+  console.log("Escrow contract initialized successfully!");
+
+  // --- Initialize Challenge Manager ---
+  console.log("-----------------------------------------");
+  console.log("Programmatically initializing Challenge Manager Contract...");
+  
+  // Re-fetch account details to increment sequence number correctly
+  const updatedAccount = await server.getAccount(publicKey);
+  const managerContract = new Contract(managerId);
+  const managerOp = managerContract.call(
+    "initialize",
+    nativeToScVal(publicKey, { type: "address" }),
+    nativeToScVal(escrowId, { type: "address" }),
+    nativeToScVal(nativeTokenSac, { type: "address" })
+  );
+
+  const managerTx = new TransactionBuilder(updatedAccount, {
+    fee: "100",
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(managerOp)
+    .setTimeout(30)
+    .build();
+
+  const managerSim = await server.simulateTransaction(managerTx);
+  if ("error" in managerSim) {
+    throw new Error(`Challenge Manager simulation failed: ${managerSim.error}`);
+  }
+
+  const managerPrepared = rpc.assembleTransaction(managerTx, managerSim).build();
+  managerPrepared.sign(deployerKeypair);
+
+  console.log("Submitting Challenge Manager initialization transaction...");
+  const managerResponse = await server.sendTransaction(managerPrepared);
+  if (managerResponse.status === "ERROR") {
+    throw new Error(`Challenge Manager submission failed: ${JSON.stringify(managerResponse.errorResult)}`);
+  }
+
+  await pollTx(managerResponse.hash);
+  console.log("Challenge Manager contract initialized successfully!");
+  console.log("-----------------------------------------");
 }
 
 async function main() {
@@ -33,13 +141,28 @@ async function main() {
   }
 
   const deployerAddress = runCmd("stellar keys address deployer");
+  const deployerSecret = runCmd("stellar keys secret deployer");
+  const deployerKeypair = Keypair.fromSecret(deployerSecret);
+
   console.log(`Deployer Stellar Address: ${deployerAddress}`);
 
   // 3. Build Smart Contracts
   console.log("Building smart contracts to WASM...");
   runCmd("stellar contract build");
 
-  // 4. Deploy Escrow Contract
+  // 4. Ensure Native SAC token exists
+  console.log("Ensuring Native Stellar Asset Contract (SAC) is deployed...");
+  let nativeTokenSac = NATIVE_TOKEN_SAC;
+  try {
+    const deployedSac = runCmd("stellar contract asset deploy --asset native --source deployer --network testnet");
+    if (deployedSac && deployedSac.startsWith("C")) {
+      nativeTokenSac = deployedSac;
+    }
+  } catch (e) {
+    console.log(`Using native SAC fallback: ${nativeTokenSac}`);
+  }
+
+  // 5. Deploy Escrow Contract
   console.log("Deploying Escrow contract to Testnet...");
   const escrowWasmPath = path.resolve(
     __dirname,
@@ -50,7 +173,7 @@ async function main() {
   );
   console.log(`Escrow Contract ID: ${escrowContractId}`);
 
-  // 5. Deploy Challenge Manager Contract
+  // 6. Deploy Challenge Manager Contract
   console.log("Deploying Challenge Manager contract to Testnet...");
   const managerWasmPath = path.resolve(
     __dirname,
@@ -61,22 +184,13 @@ async function main() {
   );
   console.log(`Challenge Manager Contract ID: ${managerContractId}`);
 
-  // 6. Initialize Escrow Contract
-  console.log("Initializing Escrow contract...");
-  runCmd(
-    `stellar contract invoke --id ${escrowContractId} --source deployer --network testnet -- initialize --manager ${managerContractId} --token ${NATIVE_TOKEN_SAC}`
-  );
+  // 7. Programmatic Initialization
+  await initializeContracts(deployerKeypair, managerContractId, escrowContractId, nativeTokenSac);
 
-  // 7. Initialize Challenge Manager Contract
-  console.log("Initializing Challenge Manager contract...");
-  runCmd(
-    `stellar contract invoke --id ${managerContractId} --source deployer --network testnet -- initialize --admin ${deployerAddress} --escrow ${escrowContractId} --token ${NATIVE_TOKEN_SAC}`
-  );
-
-  // 8. Write to .env.local file
+  // 8. Write variables directly to .env.local file
   const envContent = `# Stellar Testnet Deployment Configuration
-NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
-NEXT_PUBLIC_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
+NEXT_PUBLIC_SOROBAN_RPC_URL=${SOROBAN_RPC_URL}
+NEXT_PUBLIC_NETWORK_PASSPHRASE="${NETWORK_PASSPHRASE}"
 NEXT_PUBLIC_CHALLENGE_MANAGER_CONTRACT_ID=${managerContractId}
 NEXT_PUBLIC_ESCROW_CONTRACT_ID=${escrowContractId}
 `;

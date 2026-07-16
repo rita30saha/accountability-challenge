@@ -26,6 +26,21 @@ function runCmd(cmd) {
   }
 }
 
+function runCmdAllowError(cmd) {
+  console.log(`Checking: ${cmd}`);
+  try {
+    return {
+      output: execSync(cmd, { stdio: "pipe" }).toString().trim(),
+      success: true
+    };
+  } catch (err) {
+    return {
+      error: err.stderr ? err.stderr.toString().trim() : err.message,
+      success: false
+    };
+  }
+}
+
 async function pollTx(hash) {
   for (let i = 0; i < 20; i++) {
     const res = await server.getTransaction(hash);
@@ -132,12 +147,14 @@ async function main() {
     'stellar network add --global testnet --rpc-url "https://soroban-testnet.stellar.org" --network-passphrase "Test SDF Network ; September 2015"'
   );
 
-  // 2. Generate and fund deployer account
-  console.log("Generating deployer keypair (automatically funded via Friendbot)...");
-  try {
+  // 2. Generate and fund deployer account if it doesn't exist
+  console.log("Checking if deployer identity exists...");
+  const checkKey = runCmdAllowError("stellar keys address deployer");
+  if (!checkKey.success) {
+    console.log("Generating deployer keypair (automatically funded via Friendbot)...");
     runCmd("stellar keys generate --network testnet deployer");
-  } catch (e) {
-    console.log("Deployer key already exists or generated.");
+  } else {
+    console.log(`Deployer identity 'deployer' already exists. Reusing: ${checkKey.output}`);
   }
 
   const deployerAddress = runCmd("stellar keys address deployer");

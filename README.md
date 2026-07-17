@@ -284,5 +284,5 @@ NEXT_PUBLIC_ESCROW_CONTRACT_ID=
 
 ## 14. Demo Links
 
-* **Live Web App Demo**: `[PLACEHOLDER: Live App Link]`
-* **Video Walkthrough Demo**: `[PLACEHOLDER: Video Link]`
+* **Live Web App Demo**: https://stellar-stake-rho.vercel.app/
+* **Video Walkthrough Demo**: https://drive.google.com/drive/folders/1P4kz3Y4EhSF5_XJR60betucCHrs-t4km

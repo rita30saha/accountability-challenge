@@ -7,6 +7,7 @@ import {
   nativeToScVal,
   scValToNative,
   Address,
+  Account,
 } from "@stellar/stellar-sdk";
 import { walletService } from "@/features/wallet/services";
 import { Challenge, ChallengeStatus } from "./types";
@@ -141,10 +142,10 @@ export async function queryContract(
     throw new Error("Contract ID is not configured.");
   }
   const contract = new Contract(contractId);
-  const source = new Address("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHB"); // Dummy address
+  const dummyAccount = new Account("GCM5WPR4DDR24FSAX5LIEM4J7AI3KOWJYANSXEPKYXCSZOTAYXE75AFN", "0");
 
   const tx = new TransactionBuilder(
-    await sorobanClient.getServer().getAccount(source.toString()),
+    dummyAccount,
     {
       fee: "100",
       networkPassphrase: NETWORK_PASSPHRASE,

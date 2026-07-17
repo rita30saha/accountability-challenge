@@ -194,17 +194,10 @@ async function main() {
   console.log("Building smart contracts to WASM...");
   runCmd("stellar contract build");
 
-  // 4. Ensure Native SAC token exists
-  console.log("Ensuring Native Stellar Asset Contract (SAC) is deployed...");
-  let nativeTokenSac = NATIVE_TOKEN_SAC;
-  try {
-    const deployedSac = runCmd("stellar contract asset deploy --asset native --source deployer --network testnet");
-    if (deployedSac && deployedSac.startsWith("C")) {
-      nativeTokenSac = deployedSac;
-    }
-  } catch (e) {
-    console.log(`Using native SAC fallback: ${nativeTokenSac}`);
-  }
+  // 4. Query the correct Native Asset Contract ID directly from the CLI
+  console.log("Querying correct Native Stellar Asset Contract (SAC) ID...");
+  const nativeTokenSac = runCmd("stellar contract id asset --asset native --network testnet");
+  console.log(`Using Native Token SAC: ${nativeTokenSac}`);
 
   // 5. Deploy Escrow Contract
   console.log("Deploying Escrow contract to Testnet...");

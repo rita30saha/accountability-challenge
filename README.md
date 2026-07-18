@@ -242,7 +242,7 @@ NEXT_PUBLIC_ESCROW_CONTRACT_ID=
 
 ## 11. Deployed Addresses (Stellar Testnet)
 
-* **Challenge Manager Contract :**
+### **2.Challenge Manager Contract :**
 - Network : Stellar Testnet
 - Contract Address : CBL3XNTDUSQLT6W65DMYSFCRNGPJD7YZP6XMAS6X2GCZAUKE2SEO4ENI
 - Contract Explorar : https://lab.stellar.org/smart-contracts/contract-explorer?$=network$id=testnet&label=Testnet&horizonUrl=https:////horizon-testnet.stellar.org&rpcUrl=https:////soroban-testnet.stellar.org&passphrase=Test%20SDF%20Network%20/;%20September%202015;&smartContracts$explorer$contractId=CBKPBVG7VBXKIR7TXU2DMPJ3PGLLW2VHOAADSWWA2ZMD2WGSWSRYJPI5;;
@@ -250,7 +250,7 @@ NEXT_PUBLIC_ESCROW_CONTRACT_ID=
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/2ffe5f5a-e99d-4823-bd5e-0b9766b1df5a" />
 
 
-* **Escrow Contract ID :**
+### **2.Escrow Contract ID :**
 - Network : Stellar Testnet
 - Contract Address : CBX7IZZ2HGFUIJ4BCXPGF2TS62OTYJZHGNQS2Y4LBXD6N4W3JF7GUBMS
 - Contract Explorar : https://lab.stellar.org/smart-contracts/contract-explorer?$=network$id=testnet&label=Testnet&horizonUrl=https:////horizon-testnet.stellar.org&rpcUrl=https:////soroban-testnet.stellar.org&passphrase=Test%20SDF%20Network%20/;%20September%202015;&smartContracts$explorer$contractId=CCWPGUVGLHDGFNZIGIL76XMVWUAEUPBNWV4EHKD7YBCAAFRWVTICWZ5J;;

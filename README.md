@@ -242,19 +242,27 @@ NEXT_PUBLIC_ESCROW_CONTRACT_ID=
 
 ## 11. Deployed Addresses (Stellar Testnet)
 
-* **Challenge Manager Contract ID**: `[PLACEHOLDER: Deployed Contract ID]`
-* **Escrow Contract ID**: `[PLACEHOLDER: Deployed Contract ID]`
+* **Challenge Manager Contract :**
+- Network : Stellar Testnet
+- Contract Address : CBL3XNTDUSQLT6W65DMYSFCRNGPJD7YZP6XMAS6X2GCZAUKE2SEO4ENI
+- Contract Explorar : https://lab.stellar.org/smart-contracts/contract-explorer?$=network$id=testnet&label=Testnet&horizonUrl=https:////horizon-testnet.stellar.org&rpcUrl=https:////soroban-testnet.stellar.org&passphrase=Test%20SDF%20Network%20/;%20September%202015;&smartContracts$explorer$contractId=CBKPBVG7VBXKIR7TXU2DMPJ3PGLLW2VHOAADSWWA2ZMD2WGSWSRYJPI5;;
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/2ffe5f5a-e99d-4823-bd5e-0b9766b1df5a" />
+
+
+* **Escrow Contract ID :**
+- Network : Stellar Testnet
+- Contract Address : CBX7IZZ2HGFUIJ4BCXPGF2TS62OTYJZHGNQS2Y4LBXD6N4W3JF7GUBMS
+- Contract Explorar : https://lab.stellar.org/smart-contracts/contract-explorer?$=network$id=testnet&label=Testnet&horizonUrl=https:////horizon-testnet.stellar.org&rpcUrl=https:////soroban-testnet.stellar.org&passphrase=Test%20SDF%20Network%20/;%20September%202015;&smartContracts$explorer$contractId=CCWPGUVGLHDGFNZIGIL76XMVWUAEUPBNWV4EHKD7YBCAAFRWVTICWZ5J;;
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a1006d8e-5c69-4f03-8fb4-dd26b6419a83" />
+
 
 ---
 
-## 12. Verification & Explorer Receipts
 
-* **Deployment Transaction Hash**: `[PLACEHOLDER: Deploy TX Hash]`
-* **Explorer Link**: `https://stellar.expert/explorer/testnet/tx/[PLACEHOLDER: Deploy TX Hash]`
 
----
-
-## 13. Screenshots of the UI
+## 12. Screenshots of the UI
 
 ### Landing Page
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/3e09ae6d-9464-4a40-93f2-8f6bbfb41174" />
@@ -282,7 +290,7 @@ NEXT_PUBLIC_ESCROW_CONTRACT_ID=
 
 ---
 
-## 14. Demo Links
+## 13. Demo Links
 
 * **Live Web App Demo**: https://stellar-stake-rho.vercel.app/
 * **Video Walkthrough Demo**: https://drive.google.com/drive/folders/1P4kz3Y4EhSF5_XJR60betucCHrs-t4km

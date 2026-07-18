@@ -254,31 +254,31 @@ NEXT_PUBLIC_ESCROW_CONTRACT_ID=
 
 ---
 
-## 13. Interface Screenshots
+## 13. Screenshots of the UI
 
 ### Landing Page
-`[PLACEHOLDER: Landing Page screenshot]`
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/3e09ae6d-9464-4a40-93f2-8f6bbfb41174" />
+
 
 ### Dashboard
-`[PLACEHOLDER: Dashboard screenshot]`
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7d031a7a-be43-4ea8-bd61-32543dd15b8d" />
+
 
 ### Create Challenge Form
-`[PLACEHOLDER: Create Challenge screenshot]`
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a7f298db-e167-46ce-bb0d-7eaa28e9956b" />
 
-### Challenge Details View
-`[PLACEHOLDER: Challenge Details screenshot]`
 
 ### Activity Feed
-`[PLACEHOLDER: Activity Feed screenshot]`
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/86ab37d0-faeb-46d7-b6fa-2a019bf2ffc6" />
 
-### Transaction Center
-`[PLACEHOLDER: Transaction Center screenshot]`
 
 ### Analytics Summary
-`[PLACEHOLDER: Analytics screenshot]`
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/9bb6a6d5-a5b1-4d7b-975e-a7955c08790a" />
+
 
 ### Settings Preferences
-`[PLACEHOLDER: Settings screenshot]`
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/aebdacd0-8757-47d3-a243-0484444c4b45" />
+
 
 ---
 
